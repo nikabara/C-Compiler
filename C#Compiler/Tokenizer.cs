@@ -40,32 +40,42 @@ namespace CS_Compiler
             return newInput;
         }
 
-        public static Token? GetSpecialToken(this char input)
+        public static List<Token>? GetSpecialToken(this string input, List<Token> tokenList)
         {
-            switch (input)
+            foreach (char sToken in input)
             {
-                case '+':
-                    return new Token(TokenType.Plus, "+", 0, 0);
-                case '-':
-                    return new Token(TokenType.Minus, "-", 0, 0);
-                case '*':
-                    return new Token(TokenType.Mul, "*", 0, 0);
-                case '/':
-                    return new Token(TokenType.Div, "/", 0, 0);
-                case '(':
-                    return new Token(TokenType.LParen, "(", 0, 0);
-                case ')':
-                    return new Token(TokenType.RParen, ")", 0, 0);
-                default:
-                    return null;
+                switch (sToken)
+                {
+                    case '+':
+                        tokenList.Add(new Token(TokenType.Plus, "+", 0, 0));
+                        break;
+                    case '-':
+                        tokenList.Add(new Token(TokenType.Minus, "-", 0, 0));
+                        break;
+                    case '*':
+                        tokenList.Add(new Token(TokenType.Mul, "*", 0, 0));
+                        break;
+                    case '/':
+                        tokenList.Add(new Token(TokenType.Div, "/", 0, 0));
+                        break;
+                    case '(':
+                        tokenList.Add(new Token(TokenType.LParen, "(", 0, 0));
+                        break;
+                    case ')':
+                        tokenList.Add(new Token(TokenType.RParen, ")", 0, 0));
+                        break;
+                }
             }
+
+            return tokenList;
         }
 
-        public static Token? GetNextToken(this string input)
+        public static List<Token>? GetNextToken(this string input, List<Token> tokenList)
         {
             string myInput = ConsumeWhitespace(input);
 
             string subString = string.Empty;
+
             if (char.IsLetter(myInput[0]))
             {
                 while (char.IsLetter(myInput[0]) || char.IsNumber(myInput[0]) || myInput[0] == '_') 
@@ -74,13 +84,34 @@ namespace CS_Compiler
                     myInput = myInput[1..];
                 }
 
-                if (subString.ToLower().Equals("id"))
-                {
-                    return new Token(TokenType.ID, "ID", 0, 0);
-                }
+                tokenList.Add(new Token(TokenType.ID, (string)subString, 0, 0));
             }
 
-            return null;
+            if (char.IsNumber(myInput[0]))
+            {
+                while (char.IsNumber(myInput[0]))
+                {
+                    subString += myInput[0];
+                    myInput = myInput[1..];
+                }
+
+                tokenList.Add(new Token(TokenType.Int, string.Empty, Convert.ToInt32(subString), 0));
+            }
+
+            tokenList = GetSpecialToken(input, tokenList);
+
+            return tokenList;
+        }
+
+        public static List<Token> Tokenize(string input)
+        {
+            List<Token> tokenList = new();
+
+            input = input.Trim();
+
+            tokenList = GetNextToken(input, tokenList);
+
+            return tokenList;
         }
 
     }
