@@ -1,12 +1,10 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace CS_Compiler
+﻿namespace CS_Compiler
 {
     public static class Tokenizer
     {
         public enum TokenType
         {
-            ID, Int, Plus, Minus, Mul, Div, LParen, RParen, Eql, Assign, Eof
+            ID, Int, Plus, Minus, Mul, Div, LParen, RParen, Eql, Assign
         }
 
         public struct Token 
@@ -26,93 +24,94 @@ namespace CS_Compiler
             }
         }
 
-        private static string ConsumeWhitespace(string input)
+        private static string[] SubdivideString(this string input)
         {
-            string newInput = input;
-            int i = 0;
-
-            while (newInput[0] == ' ')
-            {
-                newInput = newInput[1..];
-                i++;
-            }
-
-            return newInput;
+            return input.Split(' ');
         }
 
-        public static List<Token>? GetSpecialToken(this string input, List<Token> tokenList)
+        private static Token? GetSpecialToken(char inputChar)
         {
-            foreach (char sToken in input)
+            switch (inputChar)
             {
-                switch (sToken)
-                {
-                    case '+':
-                        tokenList.Add(new Token(TokenType.Plus, "+", 0, 0));
-                        break;
-                    case '-':
-                        tokenList.Add(new Token(TokenType.Minus, "-", 0, 0));
-                        break;
-                    case '*':
-                        tokenList.Add(new Token(TokenType.Mul, "*", 0, 0));
-                        break;
-                    case '/':
-                        tokenList.Add(new Token(TokenType.Div, "/", 0, 0));
-                        break;
-                    case '(':
-                        tokenList.Add(new Token(TokenType.LParen, "(", 0, 0));
-                        break;
-                    case ')':
-                        tokenList.Add(new Token(TokenType.RParen, ")", 0, 0));
-                        break;
-                }
+                case '+':
+                    return new Token(TokenType.Plus, "+", 0, 0);
+                case '-':
+                    return new Token(TokenType.Minus, "-", 0, 0);
+                case '*':
+                    return new Token(TokenType.Mul, "*", 0, 0);
+                case '/':
+                    return new Token(TokenType.Div, "/", 0, 0);
+                case '=':
+                    return new Token(TokenType.Eql, "=", 0, 0);
+                case '(':
+                    return new Token(TokenType.LParen, "(", 0, 0);
+                case ')':
+                    return new Token(TokenType.RParen, ")", 0, 0);
+                default:
+                    return null;
             }
-
-            return tokenList;
         }
 
-        public static List<Token>? GetNextToken(this string input, List<Token> tokenList)
+        private static Token? GetLiteralToken(string input)
         {
-            string myInput = ConsumeWhitespace(input);
-
             string subString = string.Empty;
 
-            if (char.IsLetter(myInput[0]))
+            foreach (char item in input)
             {
-                while (char.IsLetter(myInput[0]) || char.IsNumber(myInput[0]) || myInput[0] == '_') 
+                if (char.IsLetter(item))
                 {
-                    subString += myInput[0];
-                    myInput = myInput[1..];
-                }
+                    int i = 0;
+                    foreach (char item2 in input)
+                    {
+                        subString += item2;
+                        i++;
+                    }
 
-                tokenList.Add(new Token(TokenType.ID, (string)subString, 0, 0));
+                    return new Token(TokenType.ID, subString, 0, 0);
+                }
+                if (char.IsNumber(item))
+                {
+                    int i = 0;
+                    foreach (char item2 in input)
+                    {
+                        subString += item2;
+                        i++;
+                    }
+
+                    return new Token(TokenType.Int, string.Empty, Convert.ToInt32(subString), 0);
+                }
             }
 
-            if (char.IsNumber(myInput[0]))
-            {
-                while (char.IsNumber(myInput[0]))
-                {
-                    subString += myInput[0];
-                    myInput = myInput[1..];
-                }
-
-                tokenList.Add(new Token(TokenType.Int, string.Empty, Convert.ToInt32(subString), 0));
-            }
-
-            tokenList = GetSpecialToken(input, tokenList);
-
-            return tokenList;
+            return null;
         }
 
-        public static List<Token> Tokenize(string input)
+        public static List<Token> GetTokenArray(string input)
         {
+            string[] inputArray = input.SubdivideString();
+
             List<Token> tokenList = new();
 
-            input = input.Trim();
+            for (int i = 0; i < inputArray.Length; i++)
+            {
+                foreach (char item in inputArray[i])
+                {
+                    Token? tokenWithItem = GetSpecialToken(item);
 
-            tokenList = GetNextToken(input, tokenList);
+                    Token? tokenWithInpArray = GetLiteralToken(inputArray[i]);
+
+                    if (tokenWithItem != null)
+                    {
+                        tokenList.Add((Token)tokenWithItem);
+                    }
+                    if (tokenWithInpArray != null)
+                    {
+                        tokenList.Add((Token)tokenWithInpArray);
+                        break;
+                    }
+                }
+            }
 
             return tokenList;
         }
-
     }
 }
